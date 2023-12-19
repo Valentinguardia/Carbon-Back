@@ -9,8 +9,8 @@ import userStylesRouter from "./userStyles.js";
 const router = express.Router();
 
 router.use("/users", usersRouter);
-router.use("/codeHistory", codeHistoryRouter);
-router.use("/codeSnippets", codeSnippetsRouter);
+router.use("/history", codeHistoryRouter);
+router.use("/snippets", codeSnippetsRouter);
 router.use("/favorites", favoritesRouter);
 router.use("/styles", stylesRouter);
 router.use("/userStyles", userStylesRouter);

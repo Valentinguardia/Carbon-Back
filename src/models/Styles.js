@@ -7,6 +7,7 @@ Styles.init(
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
     },
     isDefault: {
       type: Sequelize.BOOLEAN,
@@ -17,6 +18,14 @@ Styles.init(
       allowNull: false,
     },
     name: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    backgroundColor: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    textColor: {
       type: Sequelize.STRING,
       allowNull: false,
     },

@@ -7,6 +7,7 @@ CodeHistory.init(
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
     },
     snippet_id: {
       type: Sequelize.INTEGER,
