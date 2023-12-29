@@ -9,12 +9,23 @@ import emailTemplates from "../utils/emailTemplates.js";
 const { User } = models;
 const userController = {
   register: async (req, res) => {
-    const { fullName, email, password, confirmPassword } = req.body;
-    if (!fullName) return res.status(400).json({ message: "Nombre completo no proporcionado." });
-    if (!email) return res.status(400).json({ message: "Email no proporcionado." });
-    if (!validate.email(email)) return res.status(400).json({ message: "El email tiene un formato incorrecto." });
-    if (!password) return res.status(400).json({ message: "Contraseña no proporcionada." });
-    if (!validate.name(fullName)) return res.status(400).json({ message: "El nombre completo contiene caracteres inválidos." });
+    const { fullName, email, password } = req.body;
+    if (!fullName)
+      return res
+        .status(400)
+        .json({ message: "Nombre completo no proporcionado." });
+    if (!email)
+      return res.status(400).json({ message: "Email no proporcionado." });
+    if (!validate.email(email))
+      return res
+        .status(400)
+        .json({ message: "El email tiene un formato incorrecto." });
+    if (!password)
+      return res.status(400).json({ message: "Contraseña no proporcionada." });
+    if (!validate.name(fullName))
+      return res
+        .status(400)
+        .json({ message: "El nombre completo contiene caracteres inválidos." });
     if (!validate.password(password)) {
       return res.status(400).json({
         message:
@@ -25,12 +36,19 @@ const userController = {
           "✓ 6 caracteres de largo.",
       });
     }
-    if (password !== confirmPassword) return res.status(400).json({ message: "Las contraseñas no coinciden." });
+    //if (password !== confirmPassword) return res.status(400).json({ message: "Las contraseñas no coinciden." });
     try {
       const userExist = await User.findOne({ where: { email } });
-      if (userExist) return res.status(400).json({ message: "El usuario ya se encuentra registrado." });
+      if (userExist)
+        return res
+          .status(400)
+          .json({ message: "El usuario ya se encuentra registrado." });
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await User.create({fullName,email,password: hashedPassword,});
+      const newUser = await User.create({
+        fullName,
+        email,
+        password: hashedPassword,
+      });
       const mailOptions = emailTemplates.welcome(newUser);
       await transporter.sendMail(mailOptions);
       const userResponse = { ...newUser.toJSON(), password: undefined };
@@ -42,47 +60,68 @@ const userController = {
   },
   login: async (req, res) => {
     const { email, password } = req.body;
-    if (!email)  return res.status(400).json({ message: "Email no proporcionado." });
-    if (!validate.email(email)) return res.status(400).json({ message: "El email no tiene un formato correcto." });
-    if (!password) return res.status(400).json({ message: "Contraseña no proporcionada." });
+    if (!email)
+      return res.status(400).json({ message: "Email no proporcionado." });
+    if (!validate.email(email))
+      return res
+        .status(400)
+        .json({ message: "El email no tiene un formato correcto." });
+    if (!password)
+      return res.status(400).json({ message: "Contraseña no proporcionada." });
     try {
       const user = await User.findOne({ where: { email } });
-      if (!user) return res.status(400).json({ message: "Usuario no encontrado." });  
+      if (!user)
+        return res.status(400).json({ message: "Usuario no encontrado." });
       const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) return res.status(400).json({ message: "Contraseña inválida." });
+      if (!isValid)
+        return res.status(400).json({ message: "Contraseña inválida." });
       await user.update();
-      const payload = {email: user.email,fullName: user.fullName,photo: user.photo,};
+      const payload = {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      };
       const token = generateToken(payload);
       res.cookie("token", token, { httpOnly: true });
-      res.status(200).json({ payload, message: "Usuario logeado con éxito." });
+      res
+        .status(200)
+        .json({ payload, token, message: "Usuario logeado con éxito." });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Error de servidor." });
     }
   },
   logout: (req, res) => {
-    if (!req.cookies.token) return res.status(400).json({ message: "No hay sesión iniciada." });
+    if (!req.cookies.token)
+      return res.status(400).json({ message: "No hay sesión iniciada." });
     res.clearCookie("token");
     res.status(204).json({ message: "Deslogueado correctamente" });
   },
   me: async (req, res) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(400).json({ message: "Id no encontrado en el token." });
+    if (!userId)
+      return res.status(400).json({ message: "Id no encontrado en el token." });
     try {
-      const user = await User.findOne({where: { id: userId },attributes: ["email","fullName","photo",],});
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+      const user = await User.findOne({
+        where: { id: userId },
+        attributes: ["id", "email", "fullName"],
+      });
+      if (!user)
+        return res.status(404).json({ message: "Usuario no encontrado." });
       res.json(user.get({ plain: true }));
     } catch (error) {
-      console.error(error);
-      res.status(500).send("Error de servidor");
+      console.error("Error en el servidor:", error);
+      res.status(500).send("Error interno del servidor");
     }
   },
   deleteMe: async (req, res) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(400).json({ message: "Autenticación requerida." });
+    if (!userId)
+      return res.status(400).json({ message: "Autenticación requerida." });
     try {
       const user = await User.findOne({ where: { id: userId } });
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+      if (!user)
+        return res.status(404).json({ message: "Usuario no encontrado." });
       await User.destroy({ where: { id: userId } });
       const mailOptions = emailTemplates.accountDeletion(user);
       await transporter.sendMail(mailOptions);
@@ -95,8 +134,14 @@ const userController = {
   changeUserPassword: async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user?.id;
-    if (!currentPassword) return res.status(400).json({ message: "Se requiere la contraseña actual." });
-    if (!newPassword) return res.status(400).json({ message: "Se requiere la contraseña nueva." });
+    if (!currentPassword)
+      return res
+        .status(400)
+        .json({ message: "Se requiere la contraseña actual." });
+    if (!newPassword)
+      return res
+        .status(400)
+        .json({ message: "Se requiere la contraseña nueva." });
     if (!validate.password(newPassword)) {
       return res.status(400).json({
         message:
@@ -110,16 +155,23 @@ const userController = {
     }
     try {
       const user = await User.findByPk(userId);
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+      if (!user)
+        return res.status(404).json({ message: "Usuario no encontrado" });
       const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) return res.status(400).json({ message: "La contraseña actual es incorrecta." });
+      if (!isMatch)
+        return res
+          .status(400)
+          .json({ message: "La contraseña actual es incorrecta." });
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
       await user.save();
       const mailOptions = emailTemplates.passwordChanged(user);
       await transporter.sendMail(mailOptions);
       res.clearCookie("token");
-      res.json({message:"Contraseña cambiada correctamente, por favor iniciá sesión nuevamente.",});
+      res.json({
+        message:
+          "Contraseña cambiada correctamente, por favor iniciá sesión nuevamente.",
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error al cambiar la contraseña." });
@@ -127,18 +179,28 @@ const userController = {
   },
   mailForgotPassword: async (req, res) => {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "El campo email es obligatorio." });
-    if (!validate.email(email)) return res.status(400).json({ message: "El formato de correo electrónico es inválido." });
+    if (!email)
+      return res
+        .status(400)
+        .json({ message: "El campo email es obligatorio." });
+    if (!validate.email(email))
+      return res
+        .status(400)
+        .json({ message: "El formato de correo electrónico es inválido." });
     try {
       const user = await User.findOne({ where: { email } });
-      if (!user) return res.status(404).json({ message: "Usuario no registrado." });     
+      if (!user)
+        return res.status(404).json({ message: "Usuario no registrado." });
       const resetToken = generateToken({ userId: user.id });
       user.resetPasswordToken = resetToken;
       user.resetPasswordExpires = Date.now() + 3600000;
       await user.save();
       const mailOptions = emailTemplates.forgotPassword(user, resetToken);
       await transporter.sendMail(mailOptions);
-      res.json({message:"Se envió un correo electrónico con instrucciones para restablecer la contraseña.",});
+      res.json({
+        message:
+          "Se envió un correo electrónico con instrucciones para restablecer la contraseña.",
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
@@ -146,8 +208,12 @@ const userController = {
   },
   mailResetPassword: async (req, res) => {
     const { token, newPassword } = req.body;
-    if (!token) return res.status(400).json({ message: "Se requiere un token." });
-    if (!newPassword) return res.status(400).json({ message: "Se requiere ingresar una nueva contraseña." });
+    if (!token)
+      return res.status(400).json({ message: "Se requiere un token." });
+    if (!newPassword)
+      return res
+        .status(400)
+        .json({ message: "Se requiere ingresar una nueva contraseña." });
     if (!validate.password(newPassword)) {
       return res.status(400).json({
         message:
@@ -165,7 +231,8 @@ const userController = {
           resetPasswordExpires: { [Sequelize.Op.gt]: Date.now() },
         },
       });
-      if (!user) return res.status(400).json({ message: "Token inválido o expirado." });
+      if (!user)
+        return res.status(400).json({ message: "Token inválido o expirado." });
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
       user.resetPasswordToken = null;
@@ -185,10 +252,24 @@ const userController = {
     const photo = req.file;
     try {
       const user = await User.findByPk(req.user.id);
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
-      if (fullName && !validate.name(fullName)) return res.status(400).json({message: "El nombre completo contiene caracteres especiales.",});
-      if (phoneNumber && !validate.phone(phoneNumber)) return res.status(400).json({message: "El número de teléfono tiene que contener solo números.",});
-      if (photo && !!validate.imageFormat(photo)) return res.status(400).json({ message: "El formato de imagen es inválido para la foto." });
+      if (!user)
+        return res.status(404).json({ message: "Usuario no encontrado." });
+      if (fullName && !validate.name(fullName))
+        return res
+          .status(400)
+          .json({
+            message: "El nombre completo contiene caracteres especiales.",
+          });
+      if (phoneNumber && !validate.phone(phoneNumber))
+        return res
+          .status(400)
+          .json({
+            message: "El número de teléfono tiene que contener solo números.",
+          });
+      if (photo && !!validate.imageFormat(photo))
+        return res
+          .status(400)
+          .json({ message: "El formato de imagen es inválido para la foto." });
       if (fullName && fullName !== user.fullName) {
         user.fullName = fullName;
         updatedFields.push("Nombre Completo");
@@ -215,5 +296,5 @@ const userController = {
       res.status(500).json({ message: "Error al actualizar usuario." });
     }
   },
-}
+};
 export default userController;

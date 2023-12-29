@@ -7,7 +7,7 @@ const createEmailOptions = (to, subject, htmlContent) => ({
   html: htmlContent
 });
 const emailTemplates = {
-  welcome: (user) => createEmailOptions(user.email, 'Bienvenido/a a Mi Turno Web App', `
+  welcome: (user) => createEmailOptions(user.email, 'Bienvenido/a a Carbon Copy', `
     <h3>¡Hola, ${user.fullName}!</h3>
     <p>¡Tu cuenta fue creada exitosamente!</p>
     <p>Ya podés iniciar sesión y empezar a usar la aplicación.</p>

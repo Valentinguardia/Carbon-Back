@@ -1,8 +1,9 @@
 import Sequelize from "sequelize";
 import sequelize from "../config/database.js";
-class UserStyles extends Sequelize.Model {}
 
-UserStyles.init(
+class FavoriteStyles extends Sequelize.Model {}
+
+FavoriteStyles.init(
   {
     id: {
       type: Sequelize.INTEGER,
@@ -11,21 +12,26 @@ UserStyles.init(
     },
     user_id: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
-        model: "users",
+        model: "users", 
         key: "id",
       },
     },
-    style_details: {
+    styles: {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    name: {
-      type: Sequelize.STRING,
+    file: {
+      type: Sequelize.STRING, 
+      allowNull: false,
+    },
+    color: {
+      type: Sequelize.STRING, 
       allowNull: false,
     },
   },
-  { sequelize: sequelize, modelName: "users_styles" }
+  { sequelize: sequelize, modelName: "favorite_styles" } 
 );
 
-export default UserStyles;
+export default FavoriteStyles;

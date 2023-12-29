@@ -6,11 +6,7 @@ import sequelize from "./config/database.js";
 import router from "./routes/index.js";
 import { config } from "dotenv";
 import User from "./models/Users.js";
-import Favorites from "./models/Favorites.js";
-import CodeHistory from "./models/CodeHistory.js";
-import CodeSnippets from "./models/CodeSnippets.js";
-import Styles from "./models/Styles.js";
-import UserStyles from "./models/UserStyles.js";
+import FavoriteStyles from "./models/FavoritesStyles.js";
 
 config();
 
@@ -18,28 +14,26 @@ const forceSyncArg = process.argv[2];
 const forceSync = forceSyncArg === "true";
 
 const server = express();
-const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
-const serverHost = process.env.SERVER_HOST || "http://localhost:3000";
-const serverPort = process.env.SERVER_PORT || 3000;
+// const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
+// const serverHost = process.env.SERVER_HOST || "http://localhost:3000";
+// const serverPort = process.env.SERVER_PORT || 3000;
 
 server.use(cookieParser());
 server.use(express.json());
 server.use(morgan("tiny"));
 server.use(express.urlencoded({ extended: true }));
-server.use(cors({ origin: corsOrigin, credentials: true }));
+//server.use(cors({ origin: corsOrigin, credentials: true }));
+server.use(cors({ origin: "http://localhost:3001", credentials: true }));
 server.use("/", router);
 server.use((req, res, next, err) => {
   console.error(err);
   res.status(500).send(err.message);
 });
 sequelize
-  .sync({ force: forceSync })
+  .sync({ force: false })
   .then(() => {
-    console.log(
-      `Base de datos sincronizada (force: ${forceSync ? "TRUE" : "FALSE"})`
-    );
-    server.listen(serverPort, () => {
-      console.log(`Servidor escuchando en ${serverHost}:${serverPort}`);
+    server.listen(3000, () => {
+      console.log(`Servidor escuchando en puerto 3000`);
     });
   })
   .catch((err) => {
